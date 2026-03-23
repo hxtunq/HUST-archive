@@ -8,6 +8,6 @@ Sincere gratitude is extended to all teachers and advisors at HUST, especially t
 
 ---
 
-**Abbreviations**: PP/Presentation, PR/Project, RP/Report, TS/Thesis.
+**Abbreviations**: PP/Presentation, PR/Project, RP/Report, TS/Thesis, JC/Journal-Club.
 
 Last updated by Xuan Tung Hoang on March 23, 2026.
