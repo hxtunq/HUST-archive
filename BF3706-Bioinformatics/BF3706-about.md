@@ -8,7 +8,9 @@ This folder contains the TeX source files for my final bioinformatics lab report
 
 ### Materials
 > [!TIP]
-> I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
+> Bioinformatics is a vast and rapidly evolving field whose potential applications in the 21st century are virtually limitless. From sequence alignment and genome assembly to multi omics and machine learning driven analyses, its methodologies continue to expand the frontiers of biological research.
+
+I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
 
 #### Textbooks
 1. An Introduction to Applied Bioinformatics ([available-here](http://readIAB.org))
