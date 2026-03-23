@@ -1,0 +1,486 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% General setting %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[t]{beamer}
+\usecolortheme{default}
+\usetheme{default}
+\usepackage[utf8]{vietnam}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Figure and Table %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup[figure]{font=scriptsize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Useful Packages %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{adjustbox,lipsum}
+\usepackage{graphicx}
+\usepackage{chemformula}
+\usepackage{pifont}
+\usepackage{mathtools}
+\usepackage[italicdiff]{physics}
+\usepackage[dvipsnames]{xcolor}
+
+\definecolor{BlueDefault}{rgb}{0.2,0.2,0.7}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% General Information %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title[Lên men fed-batch sản xuất L-lysine]{Lên men fed-batch sản xuất L-lysine từ \textit{Corynebacterium glutamicum}}
+
+\author{Giảng viên: PGS. TS. Phạm Tuấn Anh \\ \vspace{5pt} Sinh viên: Hoàng Xuân Tùng, Nguyễn Minh Tấn}
+
+\date{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Table of Contents %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\AtBeginSection[]{
+  \begin{frame}
+  \frametitle{Mục lục}
+  \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\setbeamertemplate{section in toc}[sections numbered]
+\setbeamertemplate{subsection in toc}[subsections numbered]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Headline & Footline %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{footline}[page number]
+
+\setbeamertemplate{headline}
+{
+    \begin{beamercolorbox}{section in head/foot}
+    \vskip2pt\insertsectionnavigationhorizontal{.5\textwidth}{\hskip0pt plus1filll}{}\vskip2pt
+    
+    \end{beamercolorbox}
+}
+
+\setbeamertemplate{footline}
+{
+    \hbox{%
+  
+    \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,left]{author in head/foot}%
+        \usebeamerfont{author in head/foot}{2024.2}
+    \end{beamercolorbox}%
+  
+    \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+        \usebeamerfont{title in head/foot}
+    \end{beamercolorbox}%
+  
+    \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+        \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+        \usebeamerfont{page number in head/foot}\insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+    \end{beamercolorbox}}%
+  
+    \vskip0pt%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Mathematics %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{esint}
+\usepackage{bm}
+\usepackage{siunitx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Biblioraphy %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[backend=biber,style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	filecolor=blue,
+    citecolor=purple,
+	urlcolor=blue,
+	pdftitle={Lên men Fed-batch sản xuất L-lysine từ \textit{Corynebacterium glutamicum}},
+	pdfpagemode=FullScreen,
+}
+
+\renewcommand*{\bibfont}{\footnotesize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Main %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\frame{\titlepage}
+
+\section{Tổng quan}
+
+\begin{frame}{Tài liệu tham khảo chính \cite{sassi1998fed}}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/main-ref.png}
+	\end{figure}
+\end{frame}
+
+\subsection{L-lysine}
+
+\begin{frame}{L-lysine \cite{felix2019lysine,cheng2018expanding,yamanaka2010biotechnological,kircher2001fermentative,elder2018world}}
+	\vspace{7pt}
+	Là một amino acid thiết yếu mà con người và động vật có vú \textcolor{red}{không thể tự tổng hợp được}. Có trong trứng, cá, thịt, đậu nành...
+	
+	\begin{columns}		
+		\column{0.5\textwidth}	
+		Vai trò:
+		
+		\begin{itemize}
+			\item Thúc đẩy tăng trưởng.
+			\item Tăng cường miễn dịch.
+			\item Ngăn ngừa bệnh tim mạch.
+			\item Phụ gia thức ăn chăn nuôi.
+			\item Sản xuất chế dược phẩm.
+		\end{itemize}
+		
+		\column{0.4\textwidth}
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1\linewidth]{figures/llysine-formula.png}
+			\caption{Công thức cấu tạo của L-lysine \cite{hastings2016chebi}.}
+		\end{figure}
+
+	\end{columns}
+	
+	\vspace{15pt}
+	Sản lượng L-lysine có nguồn gốc sinh học ước tính hơn 3 triệu tấn (2022) ứng với 5.6 tỷ USD, đứng thứ hai chỉ sau axit glutamic.
+	
+\end{frame}
+
+\subsection{\textit{Corynebacterium glutamicum}}
+
+\begin{frame}{\textit{Corynebacterium glutamicum} \cite{cheng2018expanding,nakayama1966studies}}
+	\vspace{10pt}
+	Trong công nghiệp, L-lysine được sản xuất chủ yếu dựa vào các chủng \textit{Corynebacterium  glutamicum} và \textit{Escherichia coli} đột biến.
+	
+	\vspace{10pt}
+	\textit{Corynebacterium  glutamicum}:
+	
+	\begin{itemize}
+		\item Là vi khuẩn đất kị khí tuỳ ý.
+		\item Gram dương, hình que, có sắc tố cam.
+		\item Ưu thế nuôi cấy quy mô lớn.
+		\item Thuộc nhóm vi khuẩn an toàn.
+	\end{itemize}
+	
+	\vspace{10pt}
+	$\Rightarrow$ Phù hợp sản xuất tốt L-lysine trong công nghiệp, phát triển gắn với nhu cầu dinh dưỡng và thương mại L-lysine ngày càng cao.
+\end{frame}
+
+\begin{frame}{Quá trình sản xuất L-lysine từ \textit{C. glutamicum} \cite{liu2022industrial}}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.72\linewidth]{figures/industrial-production-of-llysine.jpg}
+	\end{figure}
+\end{frame}
+
+\section{Nguyên liệu và phương pháp}
+
+\subsection{Nhân giống chủng vi khuẩn}
+
+\begin{frame}{Nhân giống chủng \cite{costa1991glucose,sassi1998fed}}
+	\vspace{7pt}
+	Sàng lọc khuẩn lạc và chọn chủng \textit{C. glutamicum} ATCC 21513 chứa đột biến \textcolor{red}{kháng S-2-aminoethyl-L-cysteine}, hay chủng MG, nhằm tạo ra các thay đổi có lợi cho sản xuất L-lysine và protein.
+	
+	\vspace{7pt}
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|l|c|c|}
+			\hline
+			Thành phần & Hàm lượng & Đơn vị \\
+			\hline
+			Glucose monohydrate & 40 & g/L \\ 
+			\ch{KH2PO4} & 0.5 & g/L \\
+			\ch{K2HPO4}.3\ch{H2O} & 1.5 & g/L \\
+			\ch{MgSO4}.7\ch{H2O} & 0.5 & g/L \\
+			Peptone & 20 & g/L \\
+			Beef extract & 5 & g/L \\
+			Biotin & 50 & $\mu$g/L \\
+			\hline
+		\end{tabular}
+		\caption{Môi trường nhân giống chủng, 24 - 48h ở 30$^\circ$C.}
+	\end{table}
+\end{frame}
+
+\subsection{Môi trường lên men}
+
+\begin{frame}{Môi trường lên men \cite{sassi1998fed}}
+	Bình lên men 15 L, nhiệt độ 27$^\circ$C, chỉnh pH 7.2 bằng \ch{NH4OH}. Oxy bão hoà > 30\%. Nồng độ Glucose duy trì 0-20 g/L bằng bơm. 
+	
+	\begin{table}[h]
+		\footnotesize
+		\centering
+		\begin{tabular}{|l|c|c|l|c|c|}
+			\hline
+			Thành phần & Hàm lượng & Đơn vị & Thành phần & Hàm lượng & Đơn vị \\
+			\hline
+			Glucose & 100 & g/L & Yeast extract & 20 & g/L \\
+			\ch{(NH4)2SO4} & 40 & g/L & \ch{MgSO4}.7\ch{H2O} & 1.4 & g/L \\
+			\ch{KH2PO4} & 1 & g/L & \ch{K2HPO4} & 1 & g/L \\
+			\ch{MnSO4}.1\ch{H2O} & 1 & g/L & \ch{FeSO4}.7\ch{H2O} & 0.01 & g/L \\
+			Biotin & 400 & $\mu$g/L & Thiamine \ch{HCl} & 300 & $\mu$g/L \\
+			\hline
+		\end{tabular}
+		\caption{Môi trường lên men batch, thể tích làm việc 8 L.}
+	\end{table}
+	
+	\vspace{-6pt}
+	
+	\begin{table}[h]
+		\footnotesize
+		\centering
+		\begin{tabular}{|l|c|c|}
+			\hline
+			Thành phần & Hàm lượng & Đơn vị \\
+			\hline
+			Glucose & 600 & g/L \\
+			Yeast extract & 100 & g/L \\
+			\ch{H3PO4} & 7.5 & mL/L \\
+			\hline
+		\end{tabular}
+		\caption{Môi trường lên men fed-batch, thể tích làm việc 5.5 L.}
+	\end{table}
+\end{frame}
+
+\subsection{Thu hồi sản phẩm}
+
+\begin{frame}{Thu hồi sản phẩm \cite{sassi1998fed}}
+	\vspace{7pt}
+	Ly tâm 5000 g trong 20 phút, rửa và phơi 24h ở 105$^\circ$C xác định được mật độ tế bào.
+	
+	\begin{itemize}
+		\item Định lượng L-lysine bằng phương pháp Chinard \cite{chinard1952photometric}. 
+		\item Xác định nồng độ glucose bằng glucose oxidase. 
+		\item Phân tích các axit hữu cơ bằng sắc ký lỏng HPLC.
+	\end{itemize}
+	
+	\vspace{10pt}
+	
+	Ly tâm 5000 g và rửa bằng 0.2\% \ch{KCl}, huyền phù trong 50 mM TRIS \ch{HCl} pH 7.2 chứa 5mM \ch{MgCl2} và bị phá vỡ bằng sóng siêu âm 50W trong 20 phút. Ly tâm 10000 g trong 20 phút để loại các mảnh tế bào.
+	
+	\begin{itemize}
+		\item Xác định hàm lượng protein bằng phương pháp Bradford \cite{bradford1976rapid}.
+		\item Đánh giá hoạt tính các enzyme \cite{hinman1981nadh,tosaka1979role,fraenkel1967glucose}.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Con đường sản xuất L-lysine \cite{liu2022industrial}}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/pathway-1.jpg}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Con đường sản xuất L-lysine \cite{liu2022industrial}}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/pathway-2.jpg}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Đánh giá hoạt tính các enzyme}
+	\begin{itemize}
+		\item pyruvate dehydrogenase: \textcolor{red}{PD} \\ Xúc tác quá trình chuyển đổi pyruvate thành acetyl-CoA. \\ Kết nối đường phân và chu trình axit citric.
+		\item citrate synthase: \textcolor{red}{CS} \\ Xúc tác acetyl-CoA và oxaloacetate tạo citrate.
+		\item 6-phosphogluconate dehydrogenase: \textcolor{red}{6-PGDH} \\ Enzyme trong con đường pentose phosphate. \\ Xúc tác tạo ribulose 5-phosphate từ 6-phosphogluconate.
+		\item phosphoenolpyruvate carboxylase: \textcolor{red}{
+			PEPc} \\ Xúc tác phản ứng gắn \ch{CO2} vào phosphoenolpyruvate (PEP) để tạo oxaloacetate và phosphate.
+	\end{itemize}
+\end{frame}
+
+\section{Kết quả và thảo luận}
+
+\subsection{Kết quả lên men batch}
+
+\begin{frame}{Kết quả lên men batch \cite{sassi1998fed}}
+	\begin{figure}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/batch-1.png}
+		\caption{Quá trình lên men batch của (a) glucose ($\blacksquare$), sinh khối (\ding{108}) và lysine ($\blacktriangle$); (b) lactic acid (\ding{108}) và acetic acid ($\blacksquare$).}
+	\end{figure}
+	Sau hơn 40h, sinh khối đạt 16.2 g/L, L-lysine thu được khoảng 35 g/L.
+	Lượng lactic acid và acetic acid giữ ở mức thấp tuy nhiên có biến động ở 20-30h.
+\end{frame}
+
+\begin{frame}{Kết quả lên men batch \cite{sassi1998fed}}
+	\begin{columns}		
+		\column{0.5\textwidth}    
+		\vspace{-19pt}
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=0.9\linewidth]{figures/batch-3.png}
+		\end{figure}
+		
+		\column{0.5\textwidth}
+		\vspace{-19pt}
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=1\linewidth]{figures/batch-2.png}
+			\vspace{9pt}
+			\caption{Thông số động học quá trình lên men batch. (a) d$X/$d$t$ $X$ ($\bigcirc$) và d$P$/d$S$ (\ding{108}); (b) d$P$/d$t$ (\ding{108}) và d$S$/d$t$ ($\bigcirc$); (c) hoạt độ enzyme trong lên men batch. PEPc (\ding{108}), 6-PGDH ($\bigcirc$), CS ($ \square$), PD ($\blacksquare$).}
+		\end{figure}
+	\end{columns}
+\end{frame}
+
+\subsection{Kết quả lên men fed-batch}
+
+\begin{frame}{Kết quả lên men fed-batch \cite{sassi1998fed}}
+	
+	\vspace{-5pt}
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1\linewidth]{figures/fed-batch-1.png}
+		\caption{Quá trình lên men fed-batch của (a) glucose ($\blacksquare$), sinh khối (\ding{108}) và lysine ($\blacktriangle$); (b) lactic acid (\ding{108}) và acetic acid ($\blacksquare$).}
+	\end{figure}
+	
+	\vspace{-3pt}
+	Sau 40h, sinh khối đạt 42.8 g/L, L-lysine thu được khoảng 61 g/L. \\ Lượng lactic acid và acetic acid luôn giữ ở mức rất thấp.
+	
+\end{frame}
+
+\begin{frame}{Kết quả xác định hoạt độ enzyme \cite{sassi1998fed}}
+	\begin{columns}
+		\column{0.5\textwidth}    
+		
+		Trước 25h:
+		\begin{itemize}
+			\item Xuất hiện PD, CS, 6-PGDG.
+			\item Không phát hiện PEPc.
+		\end{itemize}
+		
+		\vspace{5pt}
+		
+		Từ 25h:
+		\begin{itemize}
+			\item Hoạt động của CS đạt cao nhất tại 25h.
+			\item \textcolor{red}{Khi hoạt tính CS giảm thì hoạt tính PEPc tăng mạnh.}
+		\end{itemize}
+		
+		\vspace{5pt}
+		
+		\column{0.5\textwidth}
+		\vspace{-17pt}
+		\begin{figure}
+			\centering
+			\includegraphics[width=1\linewidth]{figures/fed-batch-2.png}
+			\caption{Hoạt độ enzyme trong quá trình lên men fed-batch. PEPc (\ding{108}), 6-PGDH ($\bigcirc$), CS ($ \square$), PD ($\blacksquare$).}
+		\end{figure}
+	\end{columns}
+	
+	$\Rightarrow$ Có thể đạt được nhiều sản lượng L-lysine hơn khi hoạt động PEPc cao hơn nhiều so với CS với glucose là nguồn carbon duy nhất bởi khi CS cao, glucose được chuyển sang tổng hợp sinh khối.
+\end{frame}
+
+\begin{frame}{Kết quả lên men fed-batch \cite{sassi1998fed}}
+	\begin{columns}
+		\column{0.5\textwidth}
+		
+		\vspace{-20pt}
+		
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=0.9\linewidth]{figures/fed-batch-3.png}
+		\end{figure}
+		
+		\column{0.55\textwidth}
+		
+		\vspace{-10pt}
+		
+		Tại 27h (a):
+		\begin{itemize}
+			\item Hiệu suất chuyển đổi glucose thành lysine đạt cao nhất ở 0.58 g/g.
+			\item Tốc độ tăng trưởng rất thấp: 0.024 h$^{-1}$.
+		\end{itemize}
+		
+		\vspace{5pt}
+		
+		Tại 10h (b):
+		\begin{itemize}
+			\item Tỷ lệ tiêu thụ glucose đạt cao nhất, gần 5 g/lh.
+		\end{itemize}
+		
+		\vspace{20pt}
+		\scriptsize \textcolor{BlueDefault}{Hình:} Thông số động học quá trình lên men fed-batch. (a) d$X/$d$t$ $X$ ($\bigcirc$) và d$P$/d$S$ (\ding{108}); (b) d$P$/d$t$ (\ding{108}) và d$S$/d$t$ ($\bigcirc$).
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Kết quả lên men fed-batch \cite{sassi1998fed}}
+	\begin{columns}
+		\column{0.5\textwidth}
+		
+		\vspace{-20pt}
+		
+		\begin{figure}[h]
+			\centering
+			\includegraphics[width=0.9\linewidth]{figures/fed-batch-3.png}
+		\end{figure}
+		
+		\column{0.55\textwidth}
+		
+		\vspace{-10pt}
+		
+		Giai đoạn 0-15 giờ:
+		\begin{itemize}
+			\item Vi khuẩn tiêu thụ glucose để tăng sinh khối.
+		\end{itemize}
+		
+		\vspace{5pt}
+		
+		Giai đoạn sau 15 giờ:
+		\begin{itemize}
+			\item Vi khuẩn dùng năng lượng chủ yếu cho việc tạo lysine.
+		\end{itemize}
+		
+		\vspace{63pt}
+		\scriptsize \textcolor{BlueDefault}{Hình:} Thông số động học quá trình lên men fed-batch. (a) d$X/$d$t$ $X$ ($\bigcirc$) và d$P$/d$S$ (\ding{108}); (b) d$P$/d$t$ (\ding{108}) và d$S$/d$t$ ($\bigcirc$).
+	\end{columns}
+\end{frame}
+
+\subsection{So sánh hiệu quả lên men fed-batch và batch}
+
+\begin{frame}{So sánh hiệu quả lên men fed-batch và batch \cite{sassi1998fed}}
+	\begin{itemize}
+		\item Trong môi trường fed-batch, hoạt tính của tất cả các enzyme (trừ CS) thấp hơn so với nuôi cấy batch.
+		\item Hiệu suất chuyển đổi L-lysine đều tăng ở tốc độ tăng trưởng đặc hiệu thấp (0.02 h$^{-1}$).
+		\item Lượng sinh khối thu được trong nuôi cấy batch thấp hơn nhiều so với nuôi cấy fed-batch (16.2 g/L so với 42.8 g/L).
+	\end{itemize}
+	
+	\vspace{5pt}
+	$\Rightarrow$ Những kết quả này cho thấy rằng nồng độ chiết xuất nấm men trong dung dịch fed-batch quá cao, dẫn đến tăng sinh khối quá mức và làm giảm sản xuất L-lysine.
+	
+	\vspace{5pt}
+	$\Rightarrow$ Điều chỉnh tỷ lệ fed-batch glucose/YE thành 8:1. Sau 65 giờ thu được 110.6 g/L L-lysine \ch{HCl} và 41 g/L sinh khối. Sau 40 giờ nuôi cấy, lượng axit lactic và axit acetic tích tụ cao hơn. Hiệu suất chuyển hóa glucose thành L-lysine HCl đạt 0.58 g/g sau 30 giờ.
+\end{frame}
+
+\section{Kết luận}
+
+\begin{frame}{Kết luận}
+	\begin{itemize}
+		\item Tính ứng dụng: Quy trình fed-batch phù hợp để sản xuất L-lysine ở quy mô công nghiệp nhờ khả năng kiểm soát điều kiện nuôi cấy tốt hơn.
+		
+		\item Hướng phát triển: Cần tối ưu hóa tỷ lệ glucose/yeast extract và kiểm soát con đường trao đổi chất để giảm sản phẩm phụ và tăng hiệu suất.
+		
+		\item Kết quả của nghiên cứu này cho thấy phản ứng anaplerotic của PEPc rất quan trọng trong quá trình tổng hợp L-lysine. Để thúc đẩy con đường anaplerotic này, hiện cần phải xác định các yếu tố hạn chế ảnh hưởng tích cực đến con đường này.
+		
+		\item Tìm các nguồn carbon cơ chất khác thay thế cho glucose và sucrose, ví dụ như mannitol từ tảo biển - đây là nguồn tài nguyên tái tạo được.
+	\end{itemize}
+\end{frame}
+
+\newpage
+
+\begin{frame}[allowframebreaks]
+\frametitle{Tài liệu tham khảo}
+
+\printbibliography
+
+\end{frame}
+
+\end{document}
