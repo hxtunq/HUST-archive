@@ -2,10 +2,9 @@
 
 This folder contains the TeX source files for my final bioinformatics lab report (Semester 2024.2, HUST).
 
-### Overview
-
--  The report is prepared using the IEEE Transactions LaTeX template, with minor modifications.
--  The dataset used in this project belongs to the course instructors, Dr. Dam Thuy Hang and Assoc. Prof. Dr. Nguyen Lan Huong @ SCLS-HUST, and is therefore not provided here.
+> [!NOTE]
+> The report is prepared using the IEEE Transactions LaTeX template, with minor modifications.
+> The dataset belongs to the course instructors (Dr. Dam Thuy Hang and Assoc. Prof. Dr. Nguyen Lan Huong, SCLS–HUST) and is not provided here.
 
 ### Materials
 I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
