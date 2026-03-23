@@ -10,14 +10,14 @@ This folder contains the TeX source files for my final bioinformatics lab report
 ## Materials
 I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
 
-### 1. Textbooks
+#### Textbooks
 1. An Introduction to Applied Bioinformatics ([available-here](http://readIAB.org))
 2. Bioinformatics Algorithms ([available-here](https://www.bioinformaticsalgorithms.org/))
 
-### 2. Websites
+#### Websites
 1. Bioinformatics Workbook ([available-here](https://bioinformaticsworkbook.org/))
 
-### 3. Social Networking
+#### Social Networking
 - Innovative BioScience Group ([Youtube](https://www.youtube.com/@innovativebiosciencegroup4741)) | _Journal Club_ & _Seminar_
 - BioScience community server (Discord) | _Sharing_, _Connection_ & _Career Guidance_
 - Advanced VnPathoinformatics ([Youtube](https://www.youtube.com/@vpivnpathoinformatics8930)) | _Lecture_ & _Seminar_
