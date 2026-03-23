@@ -19,6 +19,7 @@ I recommend some additional readings to help you succeed in this course and, per
 1. Bioinformatics Workbook ([available-here](https://bioinformaticsworkbook.org/))
 
 #### Social Networking
-- Innovative BioScience Group ([Youtube](https://www.youtube.com/@innovativebiosciencegroup4741)) | _Journal Club_ & _Seminar_
-- BioScience community server (Discord) | _Sharing_, _Connection_ & _Career Guidance_
-- Advanced VnPathoinformatics ([Youtube](https://www.youtube.com/@vpivnpathoinformatics8930)) | _Lecture_ & _Seminar_
+- [Innovative BioScience Group](https://www.youtube.com/@innovativebiosciencegroup4741) (Journal Club & Seminar)
+- [Advanced VnPathoinformatics](https://www.youtube.com/@vpivnpathoinformatics8930) (Lecture & Seminar)
+- BioScience community (Discord) server (Networking & Career Guidance)
+
