@@ -7,7 +7,8 @@ This folder contains the TeX source files for my final bioinformatics lab report
 > The dataset belongs to the course instructors (Dr. Dam Thuy Hang and Assoc. Prof. Dr. Nguyen Lan Huong, SCLS–HUST) and is not provided here.
 
 ### Materials
-I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
+> [!TIP]
+> I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
 
 #### Textbooks
 1. An Introduction to Applied Bioinformatics ([available-here](http://readIAB.org))
