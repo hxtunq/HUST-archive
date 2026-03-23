@@ -7,8 +7,8 @@ This folder contains the TeX source files for my final bioinformatics lab report
 > The dataset belongs to the course instructors (Dr. Dam Thuy Hang and Assoc. Prof. Dr. Nguyen Lan Huong, SCLS–HUST) and is not provided here.
 
 ### Materials
-> [!TIP]
-> Bioinformatics is a vast and rapidly evolving field whose potential applications in the 21st century are virtually limitless. From sequence alignment and genome assembly to multi omics and machine learning driven analyses, its methodologies continue to expand the frontiers of biological research.
+> [!IMPORTANT]  
+> Bioinformatics is a vast and rapidly evolving field with virtually limitless applications. From sequence alignment and genome assembly to multi omics and machine learning driven analyses, its methodologies continue to expand the frontiers of biological research.
 
 I recommend some additional readings to help you succeed in this course and, perhaps, gain an appreciation for the beauty of the subject.
 
