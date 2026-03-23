@@ -9,6 +9,3 @@ This folder contains the TeX source files for the mid-term seminar of the Fermen
 ## Materials
 
 (update soon)
-
----
-Last updated by Xuan Tung Hoang on March 23, 2026.
