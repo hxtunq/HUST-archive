@@ -1,0 +1,476 @@
+---
+title: "tnlm"
+output: html_document
+date: "2026-04-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(scales)
+library(grid)
+library(gtable)
+```
+
+```{r theme_definition}
+
+pub_theme <- theme_minimal(base_family = "sans", base_size = 14) +
+  theme(
+    axis.title.x = element_text(size = 13, face = "bold", margin = margin(t = 12)),
+    axis.title.y = element_text(size = 13, face = "bold", margin = margin(r = 12)),
+    axis.title.y.right = element_text(size = 13, face = "bold", margin = margin(l = 12), angle = -90),
+    axis.text = element_text(size = 11, colour = "grey20"),
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 11, colour = "grey20"),
+    legend.position = "top",
+    legend.box = "horizontal",
+    legend.background = element_rect(fill = scales::alpha("white", 0.85), colour = "grey80", linewidth = 0.5),
+    legend.key = element_blank(),
+    legend.margin = margin(t = 6, r = 12, b = 6, l = 12),
+    legend.spacing.x = unit(0.25, "cm"),
+    legend.key.width = unit(1.0, "cm"),
+    plot.title = element_text(size = 15, face = "bold", hjust = 0.5, margin = margin(b = 15)),
+    panel.background = element_rect(fill = "white", colour = NA),
+    plot.background = element_rect(fill = "white", colour = NA),
+    panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.8),
+    panel.grid.major = element_line(colour = "grey90", linewidth = 0.5),
+    panel.grid.minor = element_line(colour = "grey95", linewidth = 0.25),
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 15),
+    # Strip (facet) styling for the multi-panel plots
+    strip.placement = "outside",
+    strip.background = element_rect(fill = "grey92", colour = "grey30", linewidth = 0.8),
+    strip.text = element_text(face = "bold", size = 11, colour = "black")
+  )
+
+col_tblm <- "#1b7837" # deep green
+col_btg <- "#762a83" # deep purple
+col_batch <- "#2166ac" # steel blue
+col_fedbatch <- "#d6604d" # warm red
+
+# Colours for parameter plots
+col_acid <- "#e08214" # warm orange
+col_base <- "#542788" # deep purple
+col_pump <- "#c51b7d" # magenta-pink
+col_afoam <- "#4d9221" # olive green
+col_po2_line <- "#2166ac" # steel blue
+```
+
+```{r load_data}
+# ── Load data ─────────────────────────────────────────────────
+batch_od <- read_excel("batch_od.xlsx")
+fedbatch_od <- read_excel("fedbatch_od.xlsx")
+batch_mach <- read_excel("batch_machine.xlsx")
+fedbatch_mach <- read_excel("fedbatch_machine.xlsx")
+glucose <- read_excel("glucose_used.xlsx")
+
+# Rename columns for convenience
+names(batch_od) <- c("time", "OD600", "lnOD", "type")
+names(fedbatch_od) <- c("time", "OD600", "lnOD")
+names(batch_mach) <- c("time", "stirr", "HCl", "NaOH", "pO2", "temp", "pH")
+names(fedbatch_mach) <- c(
+  "time", "acid", "afoam", "base",
+  "subat_adj", "subat_ml", "pH", "pO2", "stirr", "pump"
+)
+names(glucose) <- c("time", "abs", "conc", "type")
+
+# Compute base consumption
+batch_mach <- batch_mach %>% mutate(HCl_used = HCl - HCl[1], NaOH_used = NaOH - NaOH[1])
+fedbatch_mach <- fedbatch_mach %>% mutate(acid_used = acid - acid[1], base_used = base - base[1])
+```
+
+```{r plot_od_glucose_tblm_btg}
+# =============================================================
+# COMBINED PLOT 1 – OD + Glucose: TBLM vs BTG
+# =============================================================
+
+# Chuẩn bị dữ liệu OD
+od_long <- batch_od %>%
+  mutate(
+    label = ifelse(type %in% c("TBLM", "Batch"), "Thiết bị lên men (Batch)", "Bình Erlenmeyer"),
+    metric = "OD600",
+    value = OD600
+  ) %>%
+  select(time, label, metric, value)
+
+# Chuẩn bị dữ liệu Glucose
+glu_long <- glucose %>%
+  filter(type %in% c("TBLM", "Batch", "BTG")) %>%
+  mutate(
+    label = ifelse(type %in% c("TBLM", "Batch"), "Thiết bị lên men (Batch)", "Bình Erlenmeyer"),
+    metric = "Glucose",
+    value = conc
+  ) %>%
+  select(time, label, metric, value)
+
+scale_factor <- max(od_long$value, na.rm = TRUE) / max(glu_long$value, na.rm = TRUE)
+
+# Combine and average by time/label/metric to remove multi-point zigzagging
+plot_data_1 <- bind_rows(
+  od_long %>% mutate(value_plot = value),
+  glu_long %>% mutate(value_plot = value * scale_factor)
+) %>%
+  group_by(time, label, metric) %>%
+  summarise(value_plot = mean(value_plot, na.rm = TRUE), .groups = "drop") %>%
+  arrange(time)
+
+p_combined_1 <- ggplot(plot_data_1, aes(x = time, y = value_plot, group = interaction(label, metric))) +
+  geom_line(aes(colour = label, linetype = metric), linewidth = 1.0) +
+  geom_point(aes(colour = label, shape = metric), fill = "white", size = 2.0, stroke = 1.2, show.legend = c(colour = FALSE, shape = TRUE)) +
+  scale_colour_manual(
+    name = NULL,
+    breaks = c("Bình Erlenmeyer", "Thiết bị lên men (Batch)"),
+    values = c("Bình Erlenmeyer" = col_btg, "Thiết bị lên men (Batch)" = col_batch)
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("OD600" = "solid", "Glucose" = "dashed")
+  ) +
+  scale_shape_manual(
+    name = NULL,
+    values = c("OD600" = 21, "Glucose" = 24)
+  ) +
+  scale_x_continuous(breaks = seq(0, 15, 1)) +
+  scale_y_continuous(
+    name = "OD600 nm",
+    sec.axis = sec_axis(~ . / scale_factor, name = "Nồng độ Glucose (g/L)")
+  ) +
+  labs(x = "Thời gian lên men (giờ)") +
+  pub_theme +
+  guides(
+    colour = guide_legend(order = 1, override.aes = list(linewidth = 1.2, shape = NA)),
+    linetype = guide_legend(order = 2, override.aes = list(colour = "grey30")),
+    shape = guide_legend(order = 2, override.aes = list(colour = "grey30", size = 2.5))
+  ) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.ticks = element_line(colour = "grey30", linewidth = 0.5),
+    axis.ticks.length = unit(0.15, "cm")
+  )
+
+ggsave("figures/plot_combined_OD_Glucose_TBLM_vs_BTG.pdf", p_combined_1, width = 8, height = 5.5, device = cairo_pdf)
+ggsave("figures/plot_combined_OD_Glucose_TBLM_vs_BTG.png", p_combined_1, width = 8, height = 5.5, dpi = 300)
+```
+
+```{r plot_od_glucose_batch_fedbatch}
+# =============================================================
+# COMBINED PLOT 2 – OD + Glucose: Batch vs Fed-batch
+# =============================================================
+
+# Chuẩn bị dữ liệu OD
+od_fb <- fedbatch_od %>%
+  mutate(label = "Fed-batch", metric = "OD600", value = OD600) %>%
+  select(time, label, metric, value)
+od_batch_tblm <- batch_od %>%
+  filter(type %in% c("TBLM", "Batch")) %>%
+  mutate(label = "Batch", metric = "OD600", value = OD600) %>%
+  select(time, label, metric, value)
+
+glu_fb <- glucose %>%
+  filter(type == "Fed-batch") %>%
+  mutate(label = "Fed-batch", metric = "Glucose", value = conc) %>%
+  select(time, label, metric, value)
+glu_batch_tblm <- glucose %>%
+  filter(type %in% c("TBLM", "Batch")) %>%
+  mutate(label = "Batch", metric = "Glucose", value = conc) %>%
+  select(time, label, metric, value)
+
+od_bf <- bind_rows(od_batch_tblm, od_fb)
+glu_bf <- bind_rows(glu_batch_tblm, glu_fb)
+
+scale_factor_bf <- max(od_bf$value, na.rm = TRUE) / max(glu_bf$value, na.rm = TRUE)
+
+plot_data_2 <- bind_rows(
+  od_bf %>% mutate(value_plot = value),
+  glu_bf %>% mutate(value_plot = value * scale_factor_bf)
+) %>%
+  group_by(time, label, metric) %>%
+  summarise(value_plot = mean(value_plot, na.rm = TRUE), .groups = "drop") %>%
+  arrange(time)
+
+p_combined_2 <- ggplot(plot_data_2, aes(x = time, y = value_plot, group = interaction(label, metric))) +
+  geom_vline(xintercept = 5, linetype = "twodash", colour = "grey50", linewidth = 0.8) +
+  annotate("text",
+    x = 5.15, y = max(plot_data_2$value_plot, na.rm = TRUE) * 0.95,
+    label = "Bắt đầu cấp dưỡng", hjust = 0, size = 3.5, fontface = "italic", colour = "grey30"
+  ) +
+  geom_line(aes(colour = label, linetype = metric), linewidth = 1.0) +
+  geom_point(aes(colour = label, shape = metric), fill = "white", size = 2.0, stroke = 1.2, show.legend = c(colour = FALSE, shape = TRUE)) +
+  scale_colour_manual(
+    name = NULL,
+    breaks = c("Batch", "Fed-batch"),
+    values = c("Batch" = col_batch, "Fed-batch" = col_fedbatch)
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("OD600" = "solid", "Glucose" = "dashed")
+  ) +
+  scale_shape_manual(
+    name = NULL,
+    values = c("OD600" = 21, "Glucose" = 24)
+  ) +
+  scale_x_continuous(breaks = seq(0, max(plot_data_2$time, na.rm = TRUE), 1)) +
+  scale_y_continuous(
+    name = "OD600 nm",
+    sec.axis = sec_axis(~ . / scale_factor_bf, name = "Nồng độ Glucose (g/L)")
+  ) +
+  labs(x = "Thời gian lên men (giờ)") +
+  pub_theme +
+  guides(
+    colour = guide_legend(order = 1, override.aes = list(linewidth = 1.2, shape = NA)),
+    linetype = guide_legend(order = 2, override.aes = list(colour = "grey30")),
+    shape = guide_legend(order = 2, override.aes = list(colour = "grey30", size = 2.5))
+  ) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.ticks = element_line(colour = "grey30", linewidth = 0.5),
+    axis.ticks.length = unit(0.15, "cm")
+  )
+
+ggsave("figures/plot_combined_OD_Glucose_Batch_vs_Fedbatch.pdf", p_combined_2, width = 8, height = 5.5, device = cairo_pdf)
+ggsave("figures/plot_combined_OD_Glucose_Batch_vs_Fedbatch.png", p_combined_2, width = 8, height = 5.5, dpi = 300)
+```
+
+```{r plot4_params_3panel}
+# =============================================================
+# PLOT 4 – pO2, pH, STIRR: Batch vs Fed-batch (3-panel)
+# =============================================================
+
+batch_params <- batch_mach %>%
+  select(time, pO2, pH, stirr) %>%
+  mutate(experiment = "Batch")
+fb_params <- fedbatch_mach %>%
+  select(time, pO2, pH, stirr) %>%
+  mutate(experiment = "Fed-batch")
+
+params_long <- bind_rows(batch_params, fb_params) %>%
+  pivot_longer(cols = c(pO2, pH, stirr), names_to = "parameter", values_to = "value") %>%
+  mutate(
+    parameter = factor(parameter, levels = c("pO2", "pH", "stirr"), labels = c("pO2 (%)", "pH", "STIRR (rpm)")),
+    experiment = factor(experiment, levels = c("Batch", "Fed-batch"))
+  )
+
+p4 <- ggplot(params_long, aes(x = time, y = value, group = experiment, colour = experiment)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(shape = 24, fill = "white", size = 1.8, stroke = 1.0) +
+  geom_vline(xintercept = 5, linetype = "twodash", colour = "grey50", linewidth = 0.6) +
+  facet_wrap(~parameter, ncol = 1, scales = "free_y", strip.position = "right") +
+  scale_colour_manual(name = NULL, values = c("Batch" = col_batch, "Fed-batch" = col_fedbatch)) +
+  scale_x_continuous(breaks = seq(0, max(params_long$time, na.rm = TRUE), 1), expand = expansion(mult = c(0.01, 0.02))) +
+  labs(x = "Thời gian lên men (giờ)", y = NULL) +
+  pub_theme +
+  theme(
+    axis.title.y = element_blank(),
+    strip.text.y.right = element_text(angle = -90),
+    panel.spacing.y = unit(0.2, "lines")
+  )
+
+ggsave("figures/plot4_params_batch_vs_fedbatch.pdf", p4, width = 8, height = 9, device = cairo_pdf)
+ggsave("figures/plot4_params_batch_vs_fedbatch.png", p4, width = 8, height = 9, dpi = 300)
+```
+
+```{r plot6_acid_base}
+# =============================================================
+# PLOT 6 – Acid rate & Base rate over time (mL/h)
+# =============================================================
+
+batch_rate <- batch_mach %>%
+  arrange(time) %>%
+  mutate(acid_rate = c(NA, diff(HCl) / diff(time)), base_rate = c(NA, diff(NaOH) / diff(time))) %>%
+  select(time, acid_rate, base_rate) %>%
+  filter(!is.na(acid_rate)) %>%
+  pivot_longer(cols = c(acid_rate, base_rate), names_to = "reagent", values_to = "rate") %>%
+  mutate(reagent = factor(reagent, levels = c("acid_rate", "base_rate"), labels = c("Acid", "Base")), experiment = "Batch")
+
+fb_rate <- fedbatch_mach %>%
+  arrange(time) %>%
+  mutate(acid_rate = c(NA, diff(acid) / diff(time)), base_rate = c(NA, diff(base) / diff(time))) %>%
+  select(time, acid_rate, base_rate) %>%
+  filter(!is.na(acid_rate)) %>%
+  pivot_longer(cols = c(acid_rate, base_rate), names_to = "reagent", values_to = "rate") %>%
+  mutate(reagent = factor(reagent, levels = c("acid_rate", "base_rate"), labels = c("Acid", "Base")), experiment = "Fed-batch")
+
+rate_all <- bind_rows(batch_rate, fb_rate)
+
+p6 <- ggplot(rate_all, aes(x = time, y = rate, colour = reagent, shape = reagent)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(fill = "white", size = 2.5, stroke = 1.0) +
+  geom_vline(xintercept = 5, linetype = "twodash", colour = "grey50", linewidth = 0.6) +
+  facet_wrap(~experiment, ncol = 1, scales = "free_y", strip.position = "right") +
+  scale_colour_manual(name = NULL, values = c("Acid" = col_acid, "Base" = col_base)) +
+  scale_shape_manual(name = NULL, values = c("Acid" = 22, "Base" = 23)) +
+  scale_x_continuous(breaks = seq(0, max(rate_all$time, na.rm = TRUE), 1), expand = expansion(mult = c(0.01, 0.02))) +
+  labs(x = "Thời gian lên men (giờ)", y = "Tốc độ tiêu thụ (mL/h)") +
+  pub_theme +
+  theme(strip.text.y.right = element_text(angle = -90), panel.spacing.y = unit(0.4, "lines"))
+
+ggsave("figures/plot6_acid_base_rate.pdf", p6, width = 8, height = 8, device = cairo_pdf)
+ggsave("figures/plot6_acid_base_rate.png", p6, width = 8, height = 8, dpi = 300)
+```
+
+```{r plot8_pump_afoam}
+# =============================================================
+# PLOT 8 – Pump (%), AFOAM (mL), pO2 (%) – Fed-batch 3-panel
+# =============================================================
+
+fb_ops <- fedbatch_mach %>%
+  select(time, pump, afoam, pO2) %>%
+  pivot_longer(cols = c(pump, afoam, pO2), names_to = "parameter", values_to = "value") %>%
+  mutate(parameter = factor(parameter, levels = c("pO2", "pump", "afoam"), labels = c("pO2 (%)", "Pump (%)", "AFOAM (mL)")))
+
+p8 <- ggplot(fb_ops, aes(x = time, y = value, colour = parameter)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(aes(shape = parameter), fill = "white", size = 2.5, stroke = 1.0) +
+  geom_vline(xintercept = 5, linetype = "twodash", colour = "grey50", linewidth = 0.6) +
+  facet_wrap(~parameter, ncol = 1, scales = "free_y", strip.position = "right") +
+  scale_colour_manual(values = c("pO2 (%)" = col_po2_line, "Pump (%)" = col_pump, "AFOAM (mL)" = col_afoam)) +
+  scale_shape_manual(values = c("pO2 (%)" = 21, "Pump (%)" = 22, "AFOAM (mL)" = 24)) +
+  scale_x_continuous(breaks = seq(0, max(fb_ops$time, na.rm = TRUE), 1), expand = expansion(mult = c(0.01, 0.02))) +
+  labs(x = "Thời gian lên men (giờ)", y = NULL) +
+  pub_theme +
+  theme(
+    legend.position = "none",
+    strip.text.y.right = element_text(angle = -90),
+    panel.spacing.y = unit(0.2, "lines")
+  )
+
+ggsave("figures/plot8_pump_afoam_po2_fedbatch.pdf", p8, width = 8, height = 8.5, device = cairo_pdf)
+ggsave("figures/plot8_pump_afoam_po2_fedbatch.png", p8, width = 8, height = 8.5, dpi = 300)
+```
+
+```{r advanced_kinetics}
+# =============================================================
+# 1. Specific Growth Rate (mu)
+# =============================================================
+calc_mu <- function(df) {
+  df %>%
+    arrange(time) %>%
+    mutate(
+      dt = c(NA, diff(time)),
+      dlnx = c(NA, diff(log(OD600))),
+      mu = dlnx / dt
+    ) %>%
+    filter(!is.na(mu), !is.infinite(mu))
+}
+
+mu_batch <- calc_mu(batch_od %>% filter(type %in% c("TBLM", "Batch"))) %>% mutate(experiment = "Batch")
+mu_fb <- calc_mu(fedbatch_od) %>% mutate(experiment = "Fed-batch")
+mu_erl <- calc_mu(batch_od %>% filter(type == "BTG")) %>% mutate(experiment = "Erlenmeyer")
+
+mu_all <- bind_rows(mu_batch, mu_fb)
+
+p_mu <- ggplot(mu_all, aes(x = time, y = mu, colour = experiment)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey70") +
+  geom_line(linewidth = 1.0) +
+  geom_point(aes(shape = experiment), fill = "white", size = 2.5, stroke = 1.2) +
+  scale_colour_manual(name = NULL, values = c("Batch" = col_batch, "Fed-batch" = col_fedbatch)) +
+  scale_shape_manual(name = NULL, values = c("Batch" = 21, "Fed-batch" = 24)) +
+  labs(x = "Thời gian lên men (giờ)", y = expression("Tốc độ sinh trưởng riêng " * mu * " (" * h^{-1} * ")")) +
+  pub_theme
+
+ggsave("figures/plot_mu_vs_time.pdf", p_mu, width = 8, height = 5.5, device = cairo_pdf)
+ggsave("figures/plot_mu_vs_time.png", p_mu, width = 8, height = 5.5, dpi = 300)
+
+# =============================================================
+# 2. Yield (Y_X/S) and Specific Glucose Consumption (q_S)
+# =============================================================
+# Y_X/S = (OD_max - OD_0) / (Glu_0 - Glu_final)
+calc_yield <- function(od_df, glu_df, name) {
+  od_max <- max(od_df$OD600, na.rm = TRUE)
+  od_0 <- od_df$OD600[which.min(od_df$time)]
+  glu_0 <- glu_df$conc[which.min(glu_df$time)]
+  glu_min <- min(glu_df$conc, na.rm = TRUE)
+  yield <- (od_max - od_0) / (glu_0 - glu_min)
+  return(data.frame(experiment = name, Y_XS = yield))
+}
+
+y_batch <- calc_yield(batch_od %>% filter(type %in% c("TBLM", "Batch")), glucose %>% filter(type %in% c("TBLM", "Batch")), "Batch (TBLM)")
+y_erl <- calc_yield(batch_od %>% filter(type == "BTG"), glucose %>% filter(type == "BTG"), "Erlenmeyer")
+y_fb_batchphase <- calc_yield(fedbatch_od %>% filter(time <= 5), glucose %>% filter(type == "Fed-batch", time <= 5), "Fed-batch (pha đầu)")
+
+y_all <- bind_rows(y_batch, y_erl, y_fb_batchphase)
+
+p_yield <- ggplot(y_all, aes(x = experiment, y = Y_XS, fill = experiment)) +
+  geom_col(width = 0.6, colour = "grey30", linewidth = 0.8) +
+  scale_fill_manual(values = c("Batch (TBLM)" = col_batch, "Erlenmeyer" = col_btg, "Fed-batch (pha đầu)" = col_fedbatch)) +
+  labs(x = NULL, y = expression("Hệ số năng suất " * Y[X/S] * " (OD/g/L)")) +
+  pub_theme +
+  theme(legend.position = "none")
+
+ggsave("figures/plot_yield_comparison.png", p_yield, width = 7, height = 5.5, dpi = 300)
+
+# =============================================================
+# 4. Cumulative Acid/Base Bar Chart
+# =============================================================
+cum_batch <- data.frame(
+  System = "Batch",
+  Acid = max(batch_mach$HCl_used, na.rm = TRUE),
+  Base = max(batch_mach$NaOH_used, na.rm = TRUE)
+)
+cum_fb <- data.frame(
+  System = "Fed-batch",
+  Acid = max(fedbatch_mach$acid_used, na.rm = TRUE),
+  Base = max(fedbatch_mach$base_used, na.rm = TRUE)
+)
+
+cum_all <- bind_rows(cum_batch, cum_fb) %>%
+  pivot_longer(c(Acid, Base), names_to = "Reagent", values_to = "Volume")
+
+p_cum <- ggplot(cum_all, aes(x = System, y = Volume, fill = Reagent)) +
+  geom_col(position = "dodge", colour = "grey30", linewidth = 0.8, width = 0.6) +
+  scale_fill_manual(values = c("Acid" = col_acid, "Base" = col_base)) +
+  labs(x = NULL, y = "Tổng thể tích tiêu thụ (mL)") +
+  pub_theme
+
+ggsave("figures/plot_cumulative_acid_base.png", p_cum, width = 7, height = 5.5, dpi = 300)
+
+# =============================================================
+# 5. Feed rate vs OD - Fed-batch
+# =============================================================
+fb_feed <- fedbatch_mach %>%
+  arrange(time) %>%
+  mutate(feed_rate = c(NA, diff(subat_ml) / diff(time))) %>%
+  select(time, feed_rate) %>%
+  filter(!is.na(feed_rate))
+
+fb_od_clean <- fedbatch_od %>% select(time, OD600)
+
+# Dual-axis ratio
+ratio_feed_od <- max(fb_od_clean$OD600, na.rm = TRUE) / max(fb_feed$feed_rate, na.rm = TRUE)
+
+p_feed_od <- ggplot() +
+  geom_col(data = fb_feed, aes(x = time, y = feed_rate * ratio_feed_od), fill = "steelblue", alpha = 0.5, width = 0.3) +
+  geom_line(data = fb_od_clean, aes(x = time, y = OD600), colour = col_fedbatch, linewidth = 1.2) +
+  geom_point(data = fb_od_clean, aes(x = time, y = OD600), fill = "white", shape = 21, colour = col_fedbatch, size = 2.5, stroke = 1.2) +
+  scale_y_continuous(
+    name = "OD600 nm",
+    sec.axis = sec_axis(~ . / ratio_feed_od, name = "Tốc độ cấp dưỡng (mL/h)")
+  ) +
+  labs(x = "Thời gian lên men (giờ)") +
+  pub_theme +
+  theme(
+    axis.title.y.right = element_text(colour = "steelblue"),
+    axis.text.y.right = element_text(colour = "steelblue")
+  )
+
+ggsave("figures/plot_feed_rate_vs_OD_fedbatch.png", p_feed_od, width = 8, height = 5.5, dpi = 300)
+
+# =============================================================
+# 6. DO (pO2) response zoom t=4-6h
+# =============================================================
+p_po2_zoom <- ggplot(fedbatch_mach %>% filter(time >= 3.8 & time <= 6.2), aes(x = time, y = pO2)) +
+  geom_line(colour = col_po2_line, linewidth = 1.2) +
+  geom_point(fill = "white", shape = 21, size = 3, stroke = 1.2, colour = col_po2_line) +
+  geom_vline(xintercept = 5, linetype = "twodash", colour = col_fedbatch, linewidth = 1.0) +
+  annotate("text", x = 5.05, y = max(fedbatch_mach$pO2[fedbatch_mach$time >= 4 & fedbatch_mach$time <= 6], na.rm=TRUE)*0.95, 
+           label = "Bắt đầu bơm cấp dưỡng", hjust = 0, colour = col_fedbatch, fontface="italic", size=4) +
+  labs(x = "Thời gian lên men (giờ) - Focus phase", y = "pO2 (%)") +
+  pub_theme
+
+ggsave("figures/plot_po2_response_zoom.png", p_po2_zoom, width = 7, height = 5, dpi = 300)
+```

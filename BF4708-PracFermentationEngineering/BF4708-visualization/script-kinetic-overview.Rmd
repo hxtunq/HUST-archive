@@ -1,0 +1,477 @@
+---
+title: "Analysis Notebook"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+```{r}
+library(readxl)
+library(dplyr)
+
+path_batch_machine <- "C:/Users/PC/Downloads/data/data/batch_machine.xlsx"
+path_fedbatch_machine <- "C:/Users/PC/Downloads/data/data/fedbatch_machine.xlsx"
+path_batch_od <- "C:/Users/PC/Downloads/data/data/batch_od.xlsx"
+path_fedbatch_od <- "C:/Users/PC/Downloads/data/data/fedbatch_od.xlsx"
+path_glucose <- "C:/Users/PC/Downloads/data/data/glucose_used.xlsx"
+path_duong_chuan <- "C:/Users/PC/Downloads/data/data/duong_chuan_glu.xlsx"
+
+df_batch_machine <- read_excel(path_batch_machine)
+df_fedbatch_machine <- read_excel(path_fedbatch_machine)
+df_batch_od <- read_excel(path_batch_od)
+df_fedbatch_od <- read_excel(path_fedbatch_od)
+df_glucose <- read_excel(path_glucose)
+df_duong_chuan <- read_excel(path_duong_chuan)
+```
+
+```{r}
+df_batch_tblm <- df_batch_od %>% filter(Type %in% c("TBLM", "Batch")) %>% mutate(Process = "Batch") %>% select(`Time (h)`, OD600, Process)
+df_fedbatch_clean <- df_fedbatch_od %>% mutate(Process = "Fed-batch") %>% select(`Time (h)`, OD600, Process)
+
+df_od_compare <- bind_rows(df_batch_tblm, df_fedbatch_clean)
+```
+
+```{r}
+# ============================================================
+# Linetype mapping
+# ============================================================
+
+col_main <- "black"
+col_axis <- "grey30"
+col_od <- "black"
+col_po2 <- "black"
+col_stirr <- "black"
+col_ph <- "black"
+col_feed <- "black"
+col_acid <- "black"
+col_base <- "black"
+
+lty_feed  <- "dotdash"   # feeding medium
+lty_acid  <- "dashed"
+lty_base  <- "dotted"
+lty_od    <- "solid"     # phân biệt bằng chấm tròn
+lty_po2   <- "longdash"
+lty_stirr <- "twodash"   # phân biệt thêm bằng tam giác
+lty_ph    <- "13"        # chấm-gạch ngắn
+lty_pump  <- "44"        # long-dash-gap for Pump
+lty_afoam <- "1343"      # dot-dash-dot for AFOAM
+
+legend_common_labels <- c("Acid", "Base", "OD600  ", "pO2", "STIRR  ", "pH")
+legend_common_col    <- c("grey30", "grey30", col_od, col_po2, col_stirr, col_ph)
+legend_common_text   <- c("black", "black", "black", "black", "black", "black")
+legend_common_lty    <- c(lty_acid, lty_base, lty_od, lty_po2, lty_stirr, lty_ph)
+legend_common_lwd    <- c(2.2, 2.2, 1.6, 2.2, 2.0, 2.2)
+legend_common_pch    <- c(NA, NA, 16, NA, 17, 21)
+legend_common_ptbg   <- c(NA, NA, NA, NA, NA, "white")
+legend_common_ptcex  <- c(NA, NA, 0.75, NA, 0.8, 0.9)
+
+# Fed-batch-only legend items (Pump, AFOAM)
+legend_fb_labels <- c("Pump", "AFOAM")
+legend_fb_col    <- c("grey30", "grey30")
+legend_fb_text   <- c("black", "black")
+legend_fb_lty    <- c(lty_pump, lty_afoam)
+legend_fb_lwd    <- c(2.2, 2.2)
+legend_fb_pch    <- c(4, 8)      # × and ✳
+legend_fb_ptbg   <- c(NA, NA)
+legend_fb_ptcex  <- c(0.7, 0.7)
+
+# ============================================================
+# Helper functions
+# ============================================================
+
+format_axis_labels <- function(x) {
+  prettyNum(round(x, 2), drop0trailing = TRUE, scientific = FALSE)
+}
+
+full_axis_ticks <- function(ylim, n = 6) {
+  mid <- pretty(ylim, n = n)
+  mid <- mid[mid >= ylim[1] & mid <= ylim[2]]
+
+  at <- sort(unique(c(ylim[1], mid, ylim[2])))
+
+  list(
+    at = at,
+    labels = prettyNum(round(at, 2), drop0trailing = TRUE, scientific = FALSE)
+  )
+}
+
+add_series <- function(x, y, lty = "solid", pch = NA, pt_cex = 0.75,
+                       every = 1, lwd = 2.2, col = "black") {
+  ok <- which(!is.na(x) & !is.na(y))
+  if (length(ok) == 0) return(invisible(NULL))
+
+  lines(x[ok], y[ok], lty = lty, lwd = lwd, col = col)
+
+  if (!is.na(pch)) {
+    idx <- ok[seq(1, length(ok), by = every)]
+    points(x[idx], y[idx], pch = pch, cex = pt_cex, col = col)
+  }
+}
+
+# ============================================================
+# Plot: Batch Fermentation
+# ============================================================
+
+df_batch_all <- df_batch_machine %>%
+  left_join(df_batch_tblm, by = "Time (h)") %>%
+  arrange(`Time (h)`)
+
+time_vec <- df_batch_all$`Time (h)`
+acid   <- df_batch_all$`V_HCl (ml)`
+base   <- df_batch_all$`V_NaOH (ml)`
+od     <- df_batch_all$OD600
+po2    <- df_batch_all$`pO2 (%)`
+stirr  <- df_batch_all$`STIRR (rpm)`
+ph     <- df_batch_all$pH
+
+xr <- range(time_vec, na.rm = TRUE)
+
+ylim_vol   <- c(0, 140)
+ylim_od    <- c(0, 12)
+ylim_po2   <- c(10, 100)
+ylim_stirr <- c(100, 700)
+ylim_ph    <- c(7, 9)
+
+ticks_vol   <- full_axis_ticks(ylim_vol)
+ticks_od    <- full_axis_ticks(ylim_od)
+ticks_po2   <- full_axis_ticks(ylim_po2)
+ticks_stirr <- full_axis_ticks(ylim_stirr)
+ticks_ph    <- full_axis_ticks(ylim_ph)
+
+png("Plot5_Overview_Batch.png", width = 3600, height = 2200, res = 300)
+
+par(mar = c(8, 5.5, 3, 18), xpd = FALSE)
+
+# --- Left axis: Acid & Base (ml) ---
+plot(time_vec, acid, type = "l", col = col_main, lwd = 2.2, lty = lty_acid,
+     ylim = ylim_vol, xlim = xr,
+     ylab = "", xlab = "Thời gian (giờ)",
+     cex.main = 1.3, cex.lab = 1.1, cex.axis = 0.95,
+     axes = FALSE,
+     xaxs = "i", yaxs = "i")
+
+lines(time_vec, base, col = col_main, lwd = 2.2, lty = lty_base)
+
+axis(1, cex.axis = 0.95)
+axis(2,
+     at = ticks_vol$at,
+     labels = ticks_vol$labels,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.9)
+mtext("Acid (mL); Base (mL)", side = 2, line = 3.5, col = col_axis, cex = 0.95)
+box()
+
+# --- Right axis 1: OD600 ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec, od, type = "n",
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr, ylim = ylim_od,
+     xaxs = "i", yaxs = "i")
+
+add_series(time_vec, od,
+           lty = lty_od,
+           pch = 16,       # chấm tròn đặc
+           pt_cex = 0.75,
+           every = 1,
+           lwd = 1.6,
+           col = col_main)
+
+axis(4,
+     at = ticks_od$at,
+     labels = ticks_od$labels,
+     line = 0.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("OD600", side = 4, line = 2.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 2: pO2 (%) ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec, po2, type = "l", col = col_main, lwd = 2.2, lty = lty_po2,
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr, ylim = ylim_po2,
+     xaxs = "i", yaxs = "i")
+
+axis(4,
+     at = ticks_po2$at,
+     labels = ticks_po2$labels,
+     line = 4.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("pO2 (%)", side = 4, line = 6.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 3: STIRR (rpm) ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec, stirr, type = "n",
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr, ylim = ylim_stirr,
+     xaxs = "i", yaxs = "i")
+
+add_series(time_vec, stirr,
+           lty = lty_stirr,
+           pch = 17,      
+           pt_cex = 0.8,
+           every = 2,      
+           lwd = 2.0,
+           col = col_main)
+
+axis(4,
+     at = ticks_stirr$at,
+     labels = ticks_stirr$labels,
+     line = 8.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("STIRR (rpm)", side = 4, line = 10.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 4: pH ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec, ph, type = "l", col = col_main, lwd = 2.2, lty = lty_ph,
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr, ylim = ylim_ph,
+     xaxs = "i", yaxs = "i")
+
+idx_ph <- which(!is.na(ph))
+points(time_vec[idx_ph][seq(1, length(idx_ph), by = 2)],
+       ph[idx_ph][seq(1, length(idx_ph), by = 2)],
+       pch = 1, cex = 0.8, col = col_main)
+
+axis(4,
+     at = ticks_ph$at,
+     labels = ticks_ph$labels,
+     line = 12.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("pH", side = 4, line = 14.8, col = col_axis, cex = 0.9)
+
+# --- Legend ---
+par(xpd = TRUE)
+
+legend("bottom",
+       inset = c(0, -0.28),
+       horiz = TRUE,
+       bty = "n",
+       merge = TRUE,
+       legend = legend_common_labels,
+       col = legend_common_col,
+       text.col = legend_common_text,
+       lty = legend_common_lty,
+       lwd = legend_common_lwd,
+       pch = legend_common_pch,
+       pt.bg = legend_common_ptbg,
+       pt.cex = legend_common_ptcex,
+       cex = 0.85,
+       seg.len = 2.75,
+       x.intersp = 0.95,
+       y.intersp = 1,
+       xpd = NA)
+
+dev.off()
+
+# ============================================================
+# Plot: Fed-batch Fermentation
+# ============================================================
+
+df_fedbatch_all <- df_fedbatch_machine %>%
+  left_join(df_fedbatch_clean, by = "Time (h)") %>%
+  arrange(`Time (h)`)
+
+time_vec_f <- df_fedbatch_all$`Time (h)`
+acid_f  <- df_fedbatch_all$`Acid (hiệu chỉnh)`
+base_f  <- df_fedbatch_all$`Base (hiệu chỉnh)`
+feed_f  <- df_fedbatch_all$`SUBAT (ml)`
+od_f    <- df_fedbatch_all$OD600
+po2_f   <- df_fedbatch_all$`pO2 (%)`
+stirr_f <- df_fedbatch_all$`STIRR (rpm)`
+ph_f    <- df_fedbatch_all$pH
+pump_f  <- df_fedbatch_all$`Pump (%)`
+afoam_f <- df_fedbatch_all$`AFOAM (ml)`
+
+xr_f <- c(0, max(time_vec_f, na.rm = TRUE))
+
+ylim_vol_f   <- c(0, 710)
+ylim_od_f    <- c(0, 50)
+ylim_pct_f   <- c(0, 100)    # shared axis for pO2 (%) + Pump (%)
+ylim_stirr_f <- c(100, 1100)
+ylim_ph_f    <- c(7, 9)
+
+ticks_vol_f   <- full_axis_ticks(ylim_vol_f)
+ticks_od_f    <- full_axis_ticks(ylim_od_f)
+ticks_pct_f   <- full_axis_ticks(ylim_pct_f)
+ticks_stirr_f <- full_axis_ticks(ylim_stirr_f)
+ticks_ph_f    <- full_axis_ticks(ylim_ph_f)
+
+png("Plot6_Overview_Fedbatch.png", width = 3600, height = 2200, res = 300)
+
+par(mar = c(10, 5.5, 3, 18), xpd = FALSE)
+
+# --- Left axis: Feed, Acid, Base, AFOAM (all mL) ---
+plot(time_vec_f, feed_f, type = "l", col = col_main, lwd = 2.2, lty = lty_feed,
+     ylim = ylim_vol_f, xlim = xr_f,
+     ylab = "", xlab = "Thời gian (giờ)",
+     cex.main = 1.3, cex.lab = 1.1, cex.axis = 0.95,
+     axes = FALSE,
+     xaxs = "i", yaxs = "i")
+
+lines(time_vec_f, acid_f, col = col_main, lwd = 2.2, lty = lty_acid)
+lines(time_vec_f, base_f, col = col_main, lwd = 2.2, lty = lty_base)
+
+# AFOAM on the same left axis (mL)
+add_series(time_vec_f, afoam_f,
+           lty = lty_afoam,
+           pch = 8,        # ✳
+           pt_cex = 0.7,
+           every = 3,
+           lwd = 2.2,
+           col = col_main)
+
+axis(1, cex.axis = 0.95)
+axis(2,
+     at = ticks_vol_f$at,
+     labels = ticks_vol_f$labels,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.9)
+mtext("Feed; Acid; Base; AFOAM (mL)", side = 2, line = 3.5, col = col_axis, cex = 0.95)
+box()
+
+# Feeding start annotation
+abline(v = 5, lty = 3, col = "grey40", lwd = 1.5)
+text(5.2, ylim_vol_f[2] * 0.98, "Bắt đầu cấp dưỡng", col = "grey30", cex = 0.8, adj = 0)
+
+# --- Right axis 1: OD600 ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec_f, od_f, type = "n",
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr_f, ylim = ylim_od_f,
+     xaxs = "i", yaxs = "i")
+
+add_series(time_vec_f, od_f,
+           lty = lty_od,
+           pch = 16,
+           pt_cex = 0.75,
+           every = 1,
+           lwd = 1.6,
+           col = col_main)
+
+axis(4,
+     at = ticks_od_f$at,
+     labels = ticks_od_f$labels,
+     line = 0.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("OD600", side = 4, line = 2.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 2: pO2 (%) + Pump (%) – shared % axis ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec_f, po2_f, type = "l", col = col_main, lwd = 2.2, lty = lty_po2,
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr_f, ylim = ylim_pct_f,
+     xaxs = "i", yaxs = "i")
+
+# Pump on the same % axis
+add_series(time_vec_f, pump_f,
+           lty = lty_pump,
+           pch = 4,        # ×
+           pt_cex = 0.7,
+           every = 3,
+           lwd = 2.2,
+           col = col_main)
+
+axis(4,
+     at = ticks_pct_f$at,
+     labels = ticks_pct_f$labels,
+     line = 4.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("pO2; Pump (%)", side = 4, line = 6.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 3: STIRR (rpm) ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec_f, stirr_f, type = "n",
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr_f, ylim = ylim_stirr_f,
+     xaxs = "i", yaxs = "i")
+
+add_series(time_vec_f, stirr_f,
+           lty = lty_stirr,
+           pch = 17,
+           pt_cex = 0.8,
+           every = 2,
+           lwd = 2.0,
+           col = col_main)
+
+axis(4,
+     at = ticks_stirr_f$at,
+     labels = ticks_stirr_f$labels,
+     line = 8.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("STIRR (rpm)", side = 4, line = 10.8, col = col_axis, cex = 0.9)
+
+# --- Right axis 4: pH ---
+par(new = TRUE, xpd = FALSE)
+plot(time_vec_f, ph_f, type = "l", col = col_main, lwd = 2.2, lty = lty_ph,
+     axes = FALSE, xlab = "", ylab = "",
+     xlim = xr_f, ylim = ylim_ph_f,
+     xaxs = "i", yaxs = "i")
+
+idx_ph_f <- which(!is.na(ph_f))
+points(time_vec_f[idx_ph_f][seq(1, length(idx_ph_f), by = 2)],
+       ph_f[idx_ph_f][seq(1, length(idx_ph_f), by = 2)],
+       pch = 1, cex = 0.8, col = col_main)
+
+axis(4,
+     at = ticks_ph_f$at,
+     labels = ticks_ph_f$labels,
+     line = 12.5,
+     col = col_axis,
+     col.axis = col_axis,
+     cex.axis = 0.85)
+mtext("pH", side = 4, line = 14.8, col = col_axis, cex = 0.9)
+
+# --- Legend ---
+par(xpd = TRUE)
+
+legend("bottom",
+       inset = c(0, -0.35),
+       horiz = FALSE,
+       ncol = 3,
+       bty = "n",
+       merge = TRUE,
+       legend = c("Feed", legend_common_labels, legend_fb_labels),
+       col = c(col_feed, legend_common_col, legend_fb_col),
+       text.col = c("black", legend_common_text, legend_fb_text),
+       lty = c(lty_feed, legend_common_lty, legend_fb_lty),
+       lwd = c(2.2, legend_common_lwd, legend_fb_lwd),
+       pch = c(NA, legend_common_pch, legend_fb_pch),
+       pt.bg = c(NA, legend_common_ptbg, legend_fb_ptbg),
+       pt.cex = c(NA, legend_common_ptcex, legend_fb_ptcex),
+       cex = 0.8,
+       seg.len = 2.75,
+       x.intersp = 0.95,
+       y.intersp = 1.2,
+       xpd = NA)
+
+dev.off()
+
+# ============================================================
+# Display in notebook
+# ============================================================
+
+img5 <- readPNG("Plot_Overview_Batch.png")
+grid.newpage()
+grid.raster(img5)
+
+img6 <- readPNG("Plot_Overview_Fedbatch.png")
+grid.newpage()
+grid.raster(img6)
+```
